@@ -1,0 +1,16 @@
+{
+    "status": "success",
+    "country": "Kenya",
+    "countryCode": "KE",
+    "region": "30",
+    "regionName": "Nairobi",
+    "city": "Nairobi",
+    "zip": "09831",
+    "lat": -1.28642,
+    "lon": 36.8198,
+    "timezone": "Africa/Nairobi",
+    "isp": "Telkom",
+    "org": "Telephone House",
+    "as": "AS12455 Kenyan Post & Telecommunications Company / Telkom Kenya Ltd",
+    "query": "154.123.56.xxx"
+}

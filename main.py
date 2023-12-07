@@ -1,3 +1,4 @@
+#!/usr/bin/python
 __program__ = "ip-api"
 __version__ = "1.0"
 __author__ = "Simatwa"
@@ -21,6 +22,20 @@ request_session.headers = {
 }
 
 
+@click.group()
+def trace():
+    """Get to know IP information"""
+    # print(
+    #   f"""
+    #        {__program__} : v{__version__}
+    #  By : {__author__}
+
+
+# Repo : https://github.com/Simatwa/ip-api
+# """
+#       )
+
+
 class Handler:
     @staticmethod
     def exception_handler(exit_on_error=False):
@@ -39,210 +54,196 @@ class Handler:
         return decorator
 
 
-class IP_API:
-    @staticmethod
-    @click.command("me")
-    @click.option(
-        "-f",
-        "--fields",
-        multiple=True,
-        help="Restrict display to only this fields",
-        type=click.Choice(
-            [
-                "status",
-                "message",
-                "continent",
-                "continentCode",
-                "country",
-                "countryCode",
-                "region",
-                "regionName",
-                "city",
-                "district",
-                "zip",
-                "lat",
-                "lon",
-                "timezone",
-                "offset",
-                "currency",
-                "isp",
-                "as",
-                "asname",
-                "mobile",
-                "proxy",
-                "hosting",
-            ]
-        ),
-        default=[
+@Handler.exception_handler(exit_on_error=True)
+@trace.command("me")
+@click.option(
+    "-f",
+    "--fields",
+    multiple=True,
+    help="Restrict display to only this fields",
+    type=click.Choice(
+        [
             "status",
+            "message",
+            "continent",
+            "continentCode",
             "country",
             "countryCode",
+            "region",
             "regionName",
             "city",
+            "district",
+            "zip",
             "lat",
             "lon",
             "timezone",
+            "offset",
+            "currency",
             "isp",
+            "as",
+            "asname",
             "mobile",
-        ],
+            "proxy",
+            "hosting",
+        ]
+    ),
+    default=[
+        "status",
+        "country",
+        "countryCode",
+        "regionName",
+        "city",
+        "lat",
+        "lon",
+        "timezone",
+        "isp",
+        "mobile",
+    ],
+)
+@click.option(
+    "-l",
+    "--language",
+    type=click.Choice(["ru", "en", "de", "es", "pt-BR", "fr", "ja", "zh-CN"]),
+    default="en",
+    help="Return response in this language",
+)
+@click.option(
+    "-F",
+    "--format",
+    help="Response packing format",
+    type=click.Choice(["csv", "xml", "json"]),
+    default="json",
+)
+@click.option(
+    "-t",
+    "--timeout",
+    help="Terminate if request takes more than this time (s)",
+    default=30,
+    type=click.INT,
+)
+@click.option(
+    "-i",
+    "--indent",
+    help="Json dumping indentation level",
+    type=click.INT,
+    default=5,
+)
+def trace_me(fields, language, format, timeout, indent):
+    """Trace your own IP address"""
+    resp = request_session.get(
+        trace_me_url + format,
+        timeout=timeout,
+        params={"fields": ",".join(fields), "lang": language},
     )
-    @click.option(
-        "-l",
-        "--language",
-        type=click.Choice(["ru", "en", "de", "es", "pt-BR", "fr", "ja", "zh-CN"]),
-        default="en",
-        help="Return response in this language",
-    )
-    @click.option(
-        "-F",
-        "--format",
-        help="Response packing format",
-        type=click.Choice(["csv", "xml", "json"]),
-        default="json",
-    )
-    @click.option(
-        "-t",
-        "--timeout",
-        help="Terminate if request takes more than this time (s)",
-        default=30,
-        type=click.INT,
-    )
-    @click.option(
-        "-i",
-        "--indent",
-        help="Json dumping indentation level",
-        type=click.INT,
-        default=5,
-    )
-    @Handler.exception_handler(exit_on_error=True)
-    def trace_me(fields, language, format, timeout, indent):
-        resp = request_session.get(
-            trace_me_url + format,
-            timeout=timeout,
-            params={"fields": ",".join(fields), "lang": language},
-        )
-        if resp.ok:
-            if (
-                format == "json"
-                and resp.headers.get("content-type")
-                == "application/json; charset=utf-8"
-            ):
-                print(json.dumps(resp.json(), indent=indent))
-            else:
-                print(resp.text)
+    if resp.ok:
+        if (
+            format == "json"
+            and resp.headers.get("content-type") == "application/json; charset=utf-8"
+        ):
+            print(json.dumps(resp.json(), indent=indent))
         else:
             print(resp.text)
+    else:
+        print(resp.text)
 
-    @staticmethod
-    @click.command("ip")
-    @click.argument(
-        "query",
-    )  # prompt='Enter IP address to be traced',)help='IP Address to be traced',)
-    @click.option(
-        "-f",
-        "--fields",
-        multiple=True,
-        help="Restrict display to only this fields",
-        type=click.Choice(
-            [
-                "status",
-                "message",
-                "continent",
-                "continentCode",
-                "country",
-                "countryCode",
-                "region",
-                "regionName",
-                "city",
-                "district",
-                "zip",
-                "lat",
-                "lon",
-                "timezone",
-                "offset",
-                "currency",
-                "isp",
-                "as",
-                "asname",
-                "mobile",
-                "proxy",
-                "hosting",
-            ]
-        ),
-        default=[
+
+@Handler.exception_handler(exit_on_error=True)
+@trace.command(
+    "ip",
+)
+@click.argument(
+    "query",
+)  # prompt='Enter IP address to be traced',)help='IP Address to be traced',)
+@click.option(
+    "-f",
+    "--fields",
+    multiple=True,
+    help="Restrict display to only this fields",
+    type=click.Choice(
+        [
             "status",
+            "message",
+            "continent",
+            "continentCode",
             "country",
             "countryCode",
+            "region",
             "regionName",
             "city",
+            "district",
+            "zip",
             "lat",
             "lon",
             "timezone",
+            "offset",
+            "currency",
             "isp",
+            "as",
+            "asname",
             "mobile",
-        ],
+            "proxy",
+            "hosting",
+        ]
+    ),
+    default=[
+        "status",
+        "country",
+        "countryCode",
+        "regionName",
+        "city",
+        "lat",
+        "lon",
+        "timezone",
+        "isp",
+        "mobile",
+    ],
+)
+@click.option(
+    "-l",
+    "--language",
+    type=click.Choice(["ru", "en", "de", "es", "pt-BR", "fr", "ja", "zh-CN"]),
+    default="en",
+    help="Return response in this language",
+)
+@click.option(
+    "-F",
+    "--format",
+    help="Response packing format",
+    type=click.Choice(["csv", "xml", "json"]),
+    default="json",
+)
+@click.option(
+    "-t",
+    "--timeout",
+    help="Terminate if request takes more than this time (s)",
+    default=30,
+    type=click.INT,
+)
+@click.option(
+    "-i",
+    "--indent",
+    help="Json dumping indentation level",
+    type=click.INT,
+    default=5,
+)
+def trace_ip(query, fields, language, format, timeout, indent):
+    """Trace other IP address"""
+    resp = request_session.post(
+        trace_ip_url + format,
+        timeout=timeout,
+        data={"query": query, "fields": ",".join(fields), "lang": language},
     )
-    @click.option(
-        "-l",
-        "--language",
-        type=click.Choice(["ru", "en", "de", "es", "pt-BR", "fr", "ja", "zh-CN"]),
-        default="en",
-        help="Return response in this language",
-    )
-    @click.option(
-        "-F",
-        "--format",
-        help="Response packing format",
-        type=click.Choice(["csv", "xml", "json"]),
-        default="json",
-    )
-    @click.option(
-        "-t",
-        "--timeout",
-        help="Terminate if request takes more than this time (s)",
-        default=30,
-        type=click.INT,
-    )
-    @click.option(
-        "-i",
-        "--indent",
-        help="Json dumping indentation level",
-        type=click.INT,
-        default=5,
-    )
-    @Handler.exception_handler(exit_on_error=True)
-    def trace_ip(query, fields, language, format, timeout, indent):
-        resp = request_session.post(
-            trace_ip_url + format,
-            timeout=timeout,
-            data={"query": query, "fields": ",".join(fields), "lang": language},
-        )
-        if resp.ok:
-            if (
-                format == "json"
-                and resp.headers.get("content-type")
-                == "application/json; charset=utf-8"
-            ):
-                print(json.dumps(resp.json(), indent=indent))
-            else:
-                print(resp.text)
+    if resp.ok:
+        if (
+            format == "json"
+            and resp.headers.get("content-type") == "application/json; charset=utf-8"
+        ):
+            print(json.dumps(resp.json(), indent=indent))
         else:
             print(resp.text)
+    else:
+        print(resp.text)
 
 
 if __name__ == "__main__":
-
-    @click.group()
-    def trace():
-        print(
-            f"""
-              {__program__} : v{__version__}
-       By : {__author__}
-   Repo : https://github.com/Simatwa/ip-api
-"""
-        )
-
-    ip_api = IP_API()
-    trace.add_command(ip_api.trace_me)
-    trace.add_command(ip_api.trace_ip)
     trace()

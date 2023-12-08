@@ -8,8 +8,13 @@ import click
 import json
 import logging
 
+logging.basicConfig(
+    format="%(asctime)s : %(levelname)s - %(message)s [%(funcName)s : %(lineno)d]",
+    datefmt="%H:%M:%S",
+    level=logging.INFO,
+)
 trace_me_url = "http://ip-api.com/"
-trace_ip_url = "http://ip-api.com/batch"
+trace_ip_url = "http://ip-api.com/%(format)s/%(query)s"
 
 request_session = requests.Session()
 request_session.headers = {
@@ -25,80 +30,81 @@ request_session.headers = {
 @click.group()
 def trace():
     """Get to know IP information"""
-    # print(
-    #   f"""
-    #        {__program__} : v{__version__}
-    #  By : {__author__}
+    print(
+        f"""
+              {__program__}  v{__version__}
+        Author : {__author__}
+
+    Repo : https://github.com/Simatwa/ip-api
+ """
+    )
 
 
-# Repo : https://github.com/Simatwa/ip-api
-# """
-#       )
+all_fields = [
+    "query",
+    "status",
+    "message",
+    "continent",
+    "continentCode",
+    "country",
+    "countryCode",
+    "region",
+    "regionName",
+    "city",
+    "district",
+    "zip",
+    "lat",
+    "lon",
+    "timezone",
+    "offset",
+    "currency",
+    "isp",
+    "as",
+    "asname",
+    "mobile",
+    "proxy",
+    "hosting",
+    "org",
+]
+
+default_fields = [
+    "query",
+    "status",
+    "country",
+    "countryCode",
+    "region",
+    "regionName",
+    "city",
+    "zip",
+    "lat",
+    "lon",
+    "timezone",
+    "isp",
+    "org",
+    "as",
+]
+
+tabulate_formats = [
+    "simple",
+    "fancy_grid",
+    "grid",
+    "pretty",
+    "html",
+    "secure_html",
+    "orgtbl",
+    "plain",
+    "github",
+]
 
 
-class Handler:
-    @staticmethod
-    def exception_handler(exit_on_error=False):
-        def decorator(func):
-            def main(*args, **kwargs):
-                try:
-                    return func(*args, **kwargs)
-                except Exception as e:
-                    logging.exception(e)
-                    logging.error(e.args[1] if len(e.args) > 1 else str(e))
-                    if exit_on_error:
-                        exit(1)
-
-            return main
-
-        return decorator
-
-
-@Handler.exception_handler(exit_on_error=True)
 @trace.command("me")
 @click.option(
     "-f",
     "--fields",
     multiple=True,
-    help="Restrict display to only this fields",
-    type=click.Choice(
-        [
-            "status",
-            "message",
-            "continent",
-            "continentCode",
-            "country",
-            "countryCode",
-            "region",
-            "regionName",
-            "city",
-            "district",
-            "zip",
-            "lat",
-            "lon",
-            "timezone",
-            "offset",
-            "currency",
-            "isp",
-            "as",
-            "asname",
-            "mobile",
-            "proxy",
-            "hosting",
-        ]
-    ),
-    default=[
-        "status",
-        "country",
-        "countryCode",
-        "regionName",
-        "city",
-        "lat",
-        "lon",
-        "timezone",
-        "isp",
-        "mobile",
-    ],
+    help="Restrict response to only this fields",
+    type=click.Choice(all_fields),
+    default=default_fields,
 )
 @click.option(
     "-l",
@@ -110,8 +116,8 @@ class Handler:
 @click.option(
     "-F",
     "--format",
-    help="Response packing format",
-    type=click.Choice(["csv", "xml", "json"]),
+    help="Response display format",
+    type=click.Choice(["csv", "xml", "json"] + tabulate_formats),
     default="json",
 )
 @click.option(
@@ -131,72 +137,30 @@ class Handler:
 def trace_me(fields, language, format, timeout, indent):
     """Trace your own IP address"""
     resp = request_session.get(
-        trace_me_url + format,
+        trace_me_url + (format if format in ("xml", "csv") else "json"),
         timeout=timeout,
         params={"fields": ",".join(fields), "lang": language},
     )
-    if resp.ok:
-        if (
-            format == "json"
-            and resp.headers.get("content-type") == "application/json; charset=utf-8"
-        ):
-            print(json.dumps(resp.json(), indent=indent))
-        else:
-            print(resp.text)
-    else:
-        print(resp.text)
+    display_response(resp, format, indent)
 
 
-@Handler.exception_handler(exit_on_error=True)
 @trace.command(
     "ip",
 )
-@click.argument(
-    "query",
-)  # prompt='Enter IP address to be traced',)help='IP Address to be traced',)
+@click.option(
+    "-q",
+    "--query",
+    help="IP address to be traced",
+    prompt="Enter IP address",
+    required=True,
+)
 @click.option(
     "-f",
     "--fields",
     multiple=True,
-    help="Restrict display to only this fields",
-    type=click.Choice(
-        [
-            "status",
-            "message",
-            "continent",
-            "continentCode",
-            "country",
-            "countryCode",
-            "region",
-            "regionName",
-            "city",
-            "district",
-            "zip",
-            "lat",
-            "lon",
-            "timezone",
-            "offset",
-            "currency",
-            "isp",
-            "as",
-            "asname",
-            "mobile",
-            "proxy",
-            "hosting",
-        ]
-    ),
-    default=[
-        "status",
-        "country",
-        "countryCode",
-        "regionName",
-        "city",
-        "lat",
-        "lon",
-        "timezone",
-        "isp",
-        "mobile",
-    ],
+    help="Restrict response to only this fields",
+    type=click.Choice(all_fields),
+    default=default_fields,
 )
 @click.option(
     "-l",
@@ -208,8 +172,8 @@ def trace_me(fields, language, format, timeout, indent):
 @click.option(
     "-F",
     "--format",
-    help="Response packing format",
-    type=click.Choice(["csv", "xml", "json"]),
+    help="Response display format",
+    type=click.Choice(["csv", "xml", "json"] + tabulate_formats),
     default="json",
 )
 @click.option(
@@ -228,17 +192,32 @@ def trace_me(fields, language, format, timeout, indent):
 )
 def trace_ip(query, fields, language, format, timeout, indent):
     """Trace other IP address"""
-    resp = request_session.post(
-        trace_ip_url + format,
+    resp = request_session.get(
+        trace_ip_url
+        % ({"format": format if format in ("xml", "csv") else "json", "query": query}),
         timeout=timeout,
-        data={"query": query, "fields": ",".join(fields), "lang": language},
+        params={"fields": ",".join(fields), "lang": language},
     )
+    display_response(resp, format, indent)
+
+
+def display_response(resp, format, indent):
     if resp.ok:
         if (
             format == "json"
+            or format not in ("xml", "csv")
             and resp.headers.get("content-type") == "application/json; charset=utf-8"
         ):
-            print(json.dumps(resp.json(), indent=indent))
+            if format in tabulate_formats:
+                from tabulate import tabulate
+
+                data = []
+                for key, value in resp.json().items():
+                    data.append([key, str(value)])
+
+                print(tabulate(data, tablefmt=format))
+            else:
+                print(json.dumps(resp.json(), indent=indent))
         else:
             print(resp.text)
     else:
@@ -246,4 +225,8 @@ def trace_ip(query, fields, language, format, timeout, indent):
 
 
 if __name__ == "__main__":
-    trace()
+    try:
+        trace()
+    except Exception as e:
+        logging.error(e.args[1] if len(e.args) > 1 else e)
+        logging.exception(e)

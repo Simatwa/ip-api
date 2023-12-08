@@ -118,7 +118,7 @@ tabulate_formats = [
     "--format",
     help="Response display format",
     type=click.Choice(["csv", "xml", "json"] + tabulate_formats),
-    default="json",
+    default="simple",
 )
 @click.option(
     "-t",
@@ -174,7 +174,7 @@ def trace_me(fields, language, format, timeout, indent):
     "--format",
     help="Response display format",
     type=click.Choice(["csv", "xml", "json"] + tabulate_formats),
-    default="json",
+    default="simple",
 )
 @click.option(
     "-t",
